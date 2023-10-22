@@ -33,6 +33,7 @@ WIDGET *Label_new(char *name_parent, char *name, SDL_Rect *geometry,
 			
 			widget = Widget_new(name_parent, name, LABEL_WIDGET_TYPE, geometry, NULL, userFunc, userdata,
 				label, NULL /*&Label_event*/, NULL /*&Label_update*/, &Label_draw, &Label_free);
+			Widget_resetParentEvent(widget, false);
 
 			if (allocRect) free(geometry);
 			SUCCESS("create label");

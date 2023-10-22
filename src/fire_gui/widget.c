@@ -757,7 +757,6 @@ void Widget_event(WIDGET *widget)
 
 				if (widget->dragable && !widget->dragEnable) {
 					widget->dragEnable = true;
-					Input_getMousePosition(&widget->dragLastPos);
 				}
 				callback = true;
 			} else {
@@ -775,10 +774,13 @@ void Widget_event(WIDGET *widget)
 			}
 
 			if (widget->dragEnable && (Input_getMouseMoveX() || Input_getMouseMoveY())) {
-				widget->drag = true;
+				if (!widget->drag) {
+					Input_getMousePosition(&widget->dragLastPos);
+					widget->drag = true;
+				}
 				SDL_Point pos;
 				Input_getMousePosition(&pos);
-				Widget_move(widget, pos.x - (widget->dragLastPos).x, pos.y - (widget->dragLastPos).y);
+				Widget_move(widget, pos.x - widget->dragLastPos.x, pos.y - widget->dragLastPos.y);
 				//Widget_move(widget, Input_getMouseMoveX(), Input_getMouseMoveY());
 				Input_getMousePosition(&widget->dragLastPos);
 

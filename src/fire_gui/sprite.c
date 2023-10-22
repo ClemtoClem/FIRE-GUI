@@ -32,7 +32,8 @@ WIDGET *Sprite_new(char *name_parent, char *name, SDL_Rect *geometry, SDL_Rect *
 
 			widget = Widget_new(name_parent, name, SPRITE_WIDGET_TYPE, geometry, NULL, userFunc, userdata,
 				sprite, NULL /*&Sprite_event*/, &Sprite_update, &Sprite_draw, &Sprite_free);
-			
+			Widget_resetParentEvent(widget, false);
+
 			if (allocRect) free(geometry);
 			SUCCESS("create sprite");
 		}

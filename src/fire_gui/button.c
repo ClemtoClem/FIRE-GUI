@@ -68,7 +68,6 @@ WIDGET *ButtonWithLabel_new(char *name_parent, char *name, SDL_Rect *geometry, S
 		char *label_name = malloc(strlen(name) + 7);
 		sprintf(label_name, "%s:LABEL", name);
 		button->label = Label_new(name, label_name, NULL, message, fontName, sizeFont, colorFont, NULL, NULL);
-		Widget_resetParentEvent(button->label, false);
 		Widget_placeAlignment(button->label, CENTER_ALIGNMENT, 0, true, CENTER_ALIGNMENT, 0, true);
 		free(label_name);
 		

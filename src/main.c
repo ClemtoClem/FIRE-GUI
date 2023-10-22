@@ -69,8 +69,11 @@ void actionQuit(WIDGET *widget, void *private)
 {
 	if (widget != NULL && widget->type == BUTTON_WIDGET_TYPE) {
 		//uint32_t id = *((int *) privdata);
-		running = false;
-		
+		if (strcmp(widget->name, "BUTTON_CLOSE_WINDOW") == 0) {
+			running = false;
+		} else if (strcmp(widget->name, "BUTTON_MINIMIZE_WINDOW") == 0) {
+			Driver_minimizeWindow();
+		}
 		//if (widget->flags.released)
 	}
 }
@@ -161,26 +164,28 @@ int main(int argv, char *argc[])
 	if (!Driver_init("GUI Test", desktopWidth, desktopHeight, SDL_ALPHA_TRANSPARENT, SDL_WINDOW_BORDERLESS)) goto EndMain;
 	if (!Input_init(false)) goto EndMain;
 	if (!GUI_init()) goto EndMain;
+	
+	Driver_setIcon("icon.png");
 
 	/* -------------- TEST -------------- */
 	
 	SDL_Rect geometry, area;
 	WIDGET *widget;
 	
-	/* Ajout d'une image en arrière plan */
-	//Widget_resizeAlignment(Sprite_new(ROOT_WIDGET_NAME, "SPRITE1", NULL, NULL, "underwater-light-beams.png", NULL, NULL), 100, 0, 100, 0);
+	/* Affichage de l'icon en haut à gauche de l'écran */
+	Widget_placeAxis(Sprite_new(ROOT_WIDGET_NAME, "ICON", NULL, NULL, "icon.png", NULL, NULL), 4, 4);
 
 	/* Création d'un panel */
-	WIDGET *panel_top = Panel_new(ROOT_WIDGET_NAME, "PANEL_TOP", NULL, NULL, "panel_grey.png", NULL, NULL);
+	WIDGET *panel_top = Panel_new(ROOT_WIDGET_NAME, "PANEL_TOP", NULL, NULL, "panel_3.png", NULL, NULL);
 	Widget_setBorderSize(panel_top, 0, 0, OFFSET_PRESSED, OFFSET_PRESSED);
-	Widget_placeAlignment(panel_top, LEFT_ALIGNMENT, 0, true, TOP_ALIGNMENT, 0, true);
+	Widget_placeAlignment(panel_top, LEFT_ALIGNMENT, 72, false, TOP_ALIGNMENT, 4, false);
 	Widget_resize(panel_top, 300, 80);
 	Widget_dragable(panel_top, true);
 
 	/* Ajout d'un titre dans le panel */
 	RectSet(&geometry, 0, 20, 0, 0);
 	widget = Label_new("PANEL_TOP", "LABEL_TITLE1", &geometry, "FIRE - GUI", "Fire_Storm.ttf", 50, ORANGE_JUICE, NULL, NULL);
-	Widget_setXAlignment(widget, CENTER_ALIGNMENT, 0, true);
+	Widget_placeAlignment(widget, CENTER_ALIGNMENT, 0, true, CENTER_ALIGNMENT, 0, true);
 	Widget_resetParentEvent(widget, false);
 
 	/* Création d'un panel avec 3 pages */
@@ -219,6 +224,16 @@ int main(int argv, char *argc[])
 	Widget_pressedSound(widget, "click-button1.ogg");
 	Widget_releasedSound(widget, "click-button2.ogg");
 	Widget_placeAlignment(widget, RIGHT_ALIGNMENT, -28, true, TOP_ALIGNMENT, 6, true);
+
+	/* Ajout d'un bouton avec un sprite dans le panel 1 */
+	RectSet(&geometry, 0, 0, 40, 40);
+	widget = ButtonWithSprite_new("PANEL1", "BUTTON_MINIMIZE_WINDOW", &geometry, NULL, "button_blue.png", NULL, NULL,
+		"minimize.png", true, OFFSET_PRESSED, OFFSET_PRESSED, NULL, NULL);
+	Widget_setOnReleasedFunc(widget, actionQuit);
+	Widget_setBorderSize(widget, 0, 0, OFFSET_PRESSED, OFFSET_PRESSED);
+	Widget_pressedSound(widget, "click-button1.ogg");
+	Widget_releasedSound(widget, "click-button2.ogg");
+	Widget_placeAlignment(widget, RIGHT_ALIGNMENT, -72, true, TOP_ALIGNMENT, 6, true);
 
 	/* Ajout d'un sprite animé dans le panel */
 	sprite = Sprite_new("PANEL1", "SPRITE2", NULL, NULL, "explosion.png", NULL, NULL);
@@ -452,7 +467,7 @@ int main(int argv, char *argc[])
 
 	/* Ajout d'un deuxième panel avec une scroll area dans le premier panel */
 	RectSet(&geometry, 0, 0, 400, 220);
-	RectSet(&area, 0, 0, Driver_getWidth(), Driver_getHeight());
+	RectSet(&area, 0, 0, 600, 1000);
 	WIDGET *panel3 = Panel_new("PANEL1", "PANEL3", &geometry, &area, "panel_grey_inner.png", NULL, NULL);
 	Widget_setBorderSize(panel3, 4, 4, OFFSET_PRESSED, OFFSET_PRESSED);
 	Widget_placeAlignment(panel3, CENTER_ALIGNMENT, 0, true, CENTER_ALIGNMENT, 0, true);
@@ -472,8 +487,9 @@ int main(int argv, char *argc[])
 
 	RectSet(&geometry, 0, 0, 0, 0);
 	Sprite_new(name, "SPRITE4", &geometry, NULL, "arrow_down.png", NULL, NULL);
-	widget = Sprite_new(name, "SPRITE5", &geometry, NULL, "arrow_down.png", NULL, NULL);
-	Widget_setXAlignment(widget, RIGHT_ALIGNMENT, -90, false);
+	sprite = Sprite_new(name, "SPRITE5", &geometry, NULL, "arrow_down.png", NULL, NULL);
+	Widget_resetParentEvent(sprite, false);
+	Widget_setXAlignment(sprite, RIGHT_ALIGNMENT, -90, false);
 
 	for (i++; i <= 10; i++) {
 		sprintf(name, "DRAG_BUTTON%u", i);
@@ -481,8 +497,8 @@ int main(int argv, char *argc[])
 		widget = ButtonWithLabel_new("PANEL3", name, &geometry, NULL, "button_white.png",
 			"Clic me and drag me !", "arial.ttf", 18, BLACK, OFFSET_PRESSED, OFFSET_PRESSED, NULL, NULL);
 		Widget_setBorderSize(widget, 0, 0, OFFSET_PRESSED, OFFSET_PRESSED);
-		Widget_placeGrid(widget, i, 0);
-		Widget_placeAlignment(widget, CENTER_ALIGNMENT, (i%2) ? -60 : 60, true, CENTER_ALIGNMENT, 0, true);
+		Widget_placeGrid(widget, i, (i%2));
+		//Widget_placeAlignment(widget, CENTER_ALIGNMENT, (i%2) ? -60 : 60, true, CENTER_ALIGNMENT, 0, true);
 		Widget_pressedSound(widget, "click-button1.ogg");
 		Widget_releasedSound(widget, "click-button2.ogg");
 		Widget_dragable(widget, true);

@@ -58,7 +58,6 @@ void Toggle_configLeftLabel(WIDGET *widget, char *message, char *fontName, Uint3
 
 		toggle->left_label = Label_new(widget->name, label_name, &geometry, message, fontName, sizeFont, colorFont, NULL, NULL);
 		Widget_placeAlignment(toggle->left_label, CENTER_ALIGNMENT, -widget->geometry.h/2, true, CENTER_ALIGNMENT, 0, true);
-		Widget_resetParentEvent(toggle->left_label, false);
 		widget->needUpdate = true;
 		free(label_name);
 	}
@@ -75,7 +74,6 @@ void Toggle_configRightLabel(WIDGET *widget, char *message, char *fontName, Uint
 
 		toggle->right_label = Label_new(widget->name, label_name, &geometry, message, fontName, sizeFont, colorFont, NULL, NULL);
 		Widget_placeAlignment(toggle->right_label, CENTER_ALIGNMENT, widget->geometry.h/2, true, CENTER_ALIGNMENT, 0, true);
-		Widget_resetParentEvent(toggle->right_label, false);
 		widget->needUpdate = true;
 		free(label_name);
 	}
@@ -100,7 +98,6 @@ void Toggle_configLeftSprite(WIDGET *widget, SDL_Rect *spriteGeometry, char *til
 		
 		toggle->left_sprite = Sprite_new(widget->name, sprite_name, &geometry, NULL, tilesetSpriteName, NULL, NULL);
 		Widget_placeAlignment(toggle->left_sprite, CENTER_ALIGNMENT, -widget->geometry.h/2, true, CENTER_ALIGNMENT, 0, true);
-		Widget_resetParentEvent(toggle->left_sprite, false);
 		widget->needUpdate = true;
 		free(sprite_name);
 	}
@@ -117,7 +114,6 @@ void Toggle_configRightSprite(WIDGET *widget, SDL_Rect *spriteGeometry, char *ti
 		
 		toggle->right_sprite = Sprite_new(widget->name, sprite_name, &geometry, NULL, tilesetSpriteName, NULL, NULL);
 		Widget_placeAlignment(toggle->right_sprite, CENTER_ALIGNMENT, widget->geometry.h/2, true, CENTER_ALIGNMENT, 0, true);
-		Widget_resetParentEvent(toggle->right_sprite, false);
 		widget->needUpdate = true;
 		free(sprite_name);
 	}

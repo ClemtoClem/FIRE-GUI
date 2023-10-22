@@ -30,6 +30,7 @@ typedef struct t_DRIVER {
 	Uint32 width, height, bgColor;
 	SDL_Window *window;
 	SDL_Renderer *renderer;
+	SDL_Surface *iconSurface;
 	ARRAY *ressources;
 	Mix_Music *currentMusic;
 	bool audioInited, pauseMusic;
@@ -58,6 +59,8 @@ DRIVER *Driver_get();
 
 bool Drvier_makeWindowTransparent();
 
+void Driver_minimizeWindow();
+
 char *Driver_getTitle();
 void Driver_setTitle(char *title);
 Sint32 Driver_getWidth();
@@ -66,6 +69,8 @@ Uint32 Driver_getBgColor();
 void Driver_setBgColor(Uint32 bgColor);
 
 SDL_Texture *Driver_createTextureFromSurface(SDL_Surface *surface);
+
+bool Driver_setIcon(char *iconName);
 
 /**
  * @brief Importer une image (.png)
