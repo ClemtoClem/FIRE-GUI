@@ -12,7 +12,7 @@
 #include "core/timer.h"
 #include "core/colors.h"
 
-#include "gui/sdlgui.h"
+#include "fire_gui/fire_gui.h"
 
 #define OFFSET_PRESSED 2
 
@@ -158,7 +158,7 @@ int main(int argv, char *argc[])
 	if (!Init()) goto EndMain;
 	int desktopWidth = GetSystemMetrics(SM_CXSCREEN);
     int desktopHeight = GetSystemMetrics(SM_CYSCREEN);
-	if (!Driver_init("GUI Test", desktopWidth, desktopHeight, SDL_ALPHA_TRANSPARENT)) goto EndMain;
+	if (!Driver_init("GUI Test", desktopWidth, desktopHeight, SDL_ALPHA_TRANSPARENT, SDL_WINDOW_BORDERLESS)) goto EndMain;
 	if (!Input_init(false)) goto EndMain;
 	if (!GUI_init()) goto EndMain;
 
@@ -169,6 +169,19 @@ int main(int argv, char *argc[])
 	
 	/* Ajout d'une image en arrière plan */
 	//Widget_resizeAlignment(Sprite_new(ROOT_WIDGET_NAME, "SPRITE1", NULL, NULL, "underwater-light-beams.png", NULL, NULL), 100, 0, 100, 0);
+
+	/* Création d'un panel */
+	WIDGET *panel_top = Panel_new(ROOT_WIDGET_NAME, "PANEL_TOP", NULL, NULL, "panel_grey.png", NULL, NULL);
+	Widget_setBorderSize(panel_top, 0, 0, OFFSET_PRESSED, OFFSET_PRESSED);
+	Widget_placeAlignment(panel_top, LEFT_ALIGNMENT, 0, true, TOP_ALIGNMENT, 0, true);
+	Widget_resize(panel_top, 300, 80);
+	Widget_dragable(panel_top, true);
+
+	/* Ajout d'un titre dans le panel */
+	RectSet(&geometry, 0, 20, 0, 0);
+	widget = Label_new("PANEL_TOP", "LABEL_TITLE1", &geometry, "FIRE - GUI", "Fire_Storm.ttf", 50, ORANGE_JUICE, NULL, NULL);
+	Widget_setXAlignment(widget, CENTER_ALIGNMENT, 0, true);
+	Widget_resetParentEvent(widget, false);
 
 	/* Création d'un panel avec 3 pages */
 	WIDGET *panel1 = Panel_new(ROOT_WIDGET_NAME, "PANEL1", NULL, NULL, "panel_orange.png", NULL, NULL);
@@ -184,8 +197,18 @@ int main(int argv, char *argc[])
 
 	/* Ajout d'un titre dans le panel */
 	RectSet(&geometry, 0, 20, 0, 0);
-	widget = Label_new("PANEL1", "LABEL1", &geometry, "My Graphical Unity Interface", "arial.ttf", 30, WHITE, NULL, NULL);
+	widget = Label_new("PANEL1", "LABEL_TITLE2", &geometry, "FIRE GRAPHIC UNITY INTERFACE", "Fire_Storm.ttf", 50, WHITE, NULL, NULL);
 	Widget_setXAlignment(widget, CENTER_ALIGNMENT, 0, true);
+
+	/* Ajout de deux animations de flamme */
+	WIDGET *sprite = Sprite_new("PANEL1", "SPRITE_FIRE1", NULL, NULL, "fire.png", NULL, NULL);
+	Sprite_configureAnimation(sprite, true, true, 20, 1, HORIZONTAL, 5, 5, true);
+	Widget_placeAlignment(sprite, LEFT_ALIGNMENT, 20, true, TOP_ALIGNMENT, 20, true);
+	Widget_resetParentEvent(sprite, false);
+	sprite = Sprite_new("PANEL1", "SPRITE_FIRE2", NULL, NULL, "fire.png", NULL, NULL);
+	Sprite_configureAnimation(sprite, true, true, 20, 1, HORIZONTAL, 5, 5, true);
+	Widget_placeAlignment(sprite, RIGHT_ALIGNMENT, -sprite->geometry.w + 20, true, TOP_ALIGNMENT, 20, true);
+	Widget_resetParentEvent(sprite, false);
 
 	/* Ajout d'un bouton avec un sprite dans le panel 1 */
 	RectSet(&geometry, 0, 0, 40, 40);
@@ -198,9 +221,10 @@ int main(int argv, char *argc[])
 	Widget_placeAlignment(widget, RIGHT_ALIGNMENT, -28, true, TOP_ALIGNMENT, 6, true);
 
 	/* Ajout d'un sprite animé dans le panel */
-	WIDGET *sprite = Sprite_new("PANEL1", "SPRITE2", NULL, NULL, "explosion.png", NULL, NULL);
-	Sprite_configureAnimation(sprite, true, true, 9, 1, HORIZONTAL, 5, 200, false);
-	Widget_placeAlignment(sprite, RIGHT_ALIGNMENT, -70, true, BOTTOM_ALIGNMENT, -70, true);
+	sprite = Sprite_new("PANEL1", "SPRITE2", NULL, NULL, "explosion.png", NULL, NULL);
+	Sprite_configureAnimation(sprite, true, true, 9, 1, HORIZONTAL, 6, 0, false);
+	Widget_placeAlignment(sprite, RIGHT_ALIGNMENT, -80, true, BOTTOM_ALIGNMENT, -80, true);
+	Sprite_setCurrentTile(sprite, 7);
 
 	/* Page 1, les widgets jouter sur cette page seront visible seulement sur la page 1 du panel 1 */
 	Widget_setWorkPage(panel1, 1);
@@ -225,14 +249,14 @@ int main(int argv, char *argc[])
 	widget = ButtonWithLabel_new("PANEL1", "BUTTON1", &geometry, NULL, "button_green.png",
 		"Don't touch", "arial.ttf", 18, WHITE, OFFSET_PRESSED, OFFSET_PRESSED, actionButton, ptr_int32(1));
 	Widget_setBorderSize(widget, 0, 0, OFFSET_PRESSED, OFFSET_PRESSED);
-	Widget_setYAlignment(widget, CENTER_ALIGNMENT, -72, true);
+	Widget_setYAlignment(widget, CENTER_ALIGNMENT, 0, true);
 	Widget_pressedSound(widget, "explode.ogg");
 	Widget_releasedSound(widget, "click-button2.ogg");
 	Widget_disable(widget);
 	
 	widget = Toggle_new("PANEL1", "TOGGLE1", &geometry, NULL, "toggle.png",
 		OFFSET_PRESSED, OFFSET_PRESSED, false, actionToggle, ptr_int32(1));
-	Widget_setYAlignment(widget, CENTER_ALIGNMENT, -24, true);
+	Widget_setYAlignment(widget, CENTER_ALIGNMENT, 48, true);
 	Widget_pressedSound(widget, "click-button1.ogg");
 	Widget_releasedSound(widget, "click-button2.ogg");
 	Toggle_configLeftLabel(widget, "PLAY", "arial.ttf", 20, WHITE);
@@ -240,7 +264,7 @@ int main(int argv, char *argc[])
 
 	widget = Toggle_new("PANEL1", "TOGGLE2", &geometry, NULL, "toggle.png",
 		OFFSET_PRESSED, OFFSET_PRESSED, false, actionToggle, ptr_int32(2));
-	Widget_setYAlignment(widget, CENTER_ALIGNMENT, 24, true);
+	Widget_setYAlignment(widget, CENTER_ALIGNMENT, 96, true);
 	Widget_pressedSound(widget, "click-button1.ogg");
 	Widget_releasedSound(widget, "click-button2.ogg");
 	Toggle_configLeftLabel(widget, "ON", "arial.ttf", 20, WHITE);
@@ -250,13 +274,13 @@ int main(int argv, char *argc[])
 	GUI_update();
 
 	/* Ajout d'un deuxième panel avec une scroll area dans le premier panel */
-	RectSet(&geometry, 0, 0, 200, 160);
+	RectSet(&geometry, 0, 0, panel1->geometry.w/3, panel1->geometry.h/2);
 	RectSet(&area, 0, 0, panel1->geometry.w, 340);
 	WIDGET *panel2 = Panel_new("PANEL1", "PANEL2", &geometry, &area, "panel_grey_inner.png", NULL, NULL);
 	Widget_setBorderSize(panel2, 4, 4, OFFSET_PRESSED, OFFSET_PRESSED);
 	Widget_placeAlignment(panel2, CENTER_ALIGNMENT, 0, true, CENTER_ALIGNMENT, 0, true);
 
-	RectSet(&geometry, 0, 0, 200, 20);
+	RectSet(&geometry, 0, 0, panel1->geometry.w/3, 20);
 	widget = Scrollbar_new("PANEL1", "SCROLLBAR1", &geometry, "panel_grey_inner.png", "button_grey.png", HORIZONTAL, 0, panel2->area.w, 4, NULL, NULL);
 	Widget_setBorderSize(widget, 4, 4, OFFSET_PRESSED, OFFSET_PRESSED);
 	Widget_placeAlignment(widget, CENTER_ALIGNMENT, 0, true, CENTER_ALIGNMENT, panel2->geometry.h/2 + 12, true);

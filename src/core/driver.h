@@ -47,7 +47,7 @@ SDL_Color hexColorToRGBA(Uint32 hex);
 /**
  * @brief Initialisation de la structure Driver ("driver" est une variable globale ne pas initialiser)
 */
-bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor);
+bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor, Uint32 windowflags);
 
 /**
  * @brief Detruire la structure Driver

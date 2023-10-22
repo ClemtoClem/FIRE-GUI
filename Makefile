@@ -13,18 +13,17 @@ endif
 
 # Liste des repertoires contenant respectivement les fichiers :*.c,*.h,*.o, l'executable
 SRCDIR  := src
-HEADDIR := ../include/SDL2
-LIBDIR := ../lib
-#HEADDIR := C:/MinGW/x86_64-w64-mingw32/include/SDL2
-#LIBDIR := C:/MinGW/x86_64-w64-mingw32/lib
+HEADDIR := -I C:/MinGW/x86_64-w64-mingw32/include/SDL2
+LIBDIR := -L C:/MinGW/x86_64-w64-mingw32/lib
+MINGW_BUILD_DIR = C:/MinGW/x86_64-w64-mingw32/bin
 BINDIR := bin
 
-#CFLAGS := -I $(HEADDIR) -L $(LIBDIR) -g -Wall -pedantic -O3 -fno-tree-vectorize
-CFLAGS := -I $(HEADDIR) -L $(LIBDIR) -g -Wall -fcommon
+#CFLAGS := $(HEADDIR) $(LIBDIR) -g -Wall -pedantic -O3 -fno-tree-vectorize
+CFLAGS := $(HEADDIR) $(LIBDIR) -g -Wall -fcommon
 ifeq ($(OS), Windows_NT)
-	GLLIBS := -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
+	GLLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
 else
-	GLLIBS := -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
+	GLLIBS = -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
 endif
 
 # L'executable
@@ -46,8 +45,15 @@ $(BINDIR)/%.o: $(SRCDIR)/%.c
 	@echo "=== Creating object ==="
 	$(CC) -o $@ -c $< $(CFLAGS)
 
+copy:
+	mkdir -p $(BINDIR)
+	cp -f $(MINGW_BUILD_DIR)/SDL2.dll $(BINDIR)
+	cp -f $(MINGW_BUILD_DIR)/SDL2_ttf.dll $(BINDIR)
+	cp -f $(MINGW_BUILD_DIR)/SDL2_image.dll $(BINDIR)
+	cp -f $(MINGW_BUILD_DIR)/SDL2_mixer.dll $(BINDIR)
+
 # Nettoyage des objets (Tout sera recompiler)
 clean:
 	@echo "=== Cleaning project ==="
-	$(RM) $(BINDIR)/main.exe $(BINDIR)/*.o $(BINDIR)/gui/*.o $(BINDIR)/core/*.o
+	$(RM) $(BINDIR)/main.exe $(BINDIR)/*.o $(BINDIR)/**/*.o
 .PHONY: clean

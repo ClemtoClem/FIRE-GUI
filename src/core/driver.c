@@ -22,7 +22,7 @@ SDL_Color hexColorToRGBA(Uint32 hex)
 	return color;
 }
 
-bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor)
+bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor, Uint32 windowflags)
 {
 	bool success = false;
 	if (driver == NULL) {
@@ -33,13 +33,13 @@ bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor)
 		ressources = (ARRAY *) Array_new(NO_LIMITED);
 		if (ressources == NULL) { LOG_ERROR("Echec de l'allocation de la structure ARRAY"); goto EndGraphics; }
 
-		window = (SDL_Window *) SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,  SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS);
+		window = (SDL_Window *) SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,  SDL_WINDOW_SHOWN|windowflags);
 		if (window == NULL) {
 			LOG_ERROR("Could not create SDL window: %s", SDL_GetError());
 			goto EndGraphics;
 		}
 		
-		SDL_SetSurfaceBlendMode(SDL_GetWindowSurface(window), SDL_BLENDMODE_BLEND);
+		//SDL_SetSurfaceBlendMode(SDL_GetWindowSurface(window), SDL_BLENDMODE_BLEND);
 		
 		//Drvier_windowTransparent();
 
