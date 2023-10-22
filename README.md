@@ -1,4 +1,4 @@
-# FIRE-GUI [![FIRE - GUI](https://github.com/ClemtoClem/GUI.git)]
+# FIRE-GUI [![FIRE - GUI](res/images/icon.png)]
 
 This is a C graphical user interface library using the SDL2 library for <br>Window OS</br>.
 
