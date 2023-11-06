@@ -22,7 +22,7 @@ SDL_Color hexColorToRGBA(Uint32 hex)
 	return color;
 }
 
-bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor)
+bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor, Uint32 windowflags)
 {
 	bool success = false;
 	if (driver == NULL) {
@@ -33,13 +33,13 @@ bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor)
 		ressources = (ARRAY *) Array_new(NO_LIMITED);
 		if (ressources == NULL) { LOG_ERROR("Echec de l'allocation de la structure ARRAY"); goto EndGraphics; }
 
-		window = (SDL_Window *) SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,  SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS);
+		window = (SDL_Window *) SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,  SDL_WINDOW_SHOWN|windowflags);
 		if (window == NULL) {
 			LOG_ERROR("Could not create SDL window: %s", SDL_GetError());
 			goto EndGraphics;
 		}
 		
-		SDL_SetSurfaceBlendMode(SDL_GetWindowSurface(window), SDL_BLENDMODE_BLEND);
+		//SDL_SetSurfaceBlendMode(SDL_GetWindowSurface(window), SDL_BLENDMODE_BLEND);
 		
 		//Drvier_windowTransparent();
 
@@ -82,6 +82,7 @@ void Driver_free()
 {
 	if (driver != NULL) {
 		Driver_closeAudio(driver);
+		if (driver->iconSurface != NULL) SDL_FreeSurface(driver->iconSurface);
 		if (driver->ressources != NULL) Array_free(driver->ressources, true);
 		if (driver->renderer != NULL)   SDL_DestroyRenderer(driver->renderer);
 		if (driver->window != NULL)		SDL_DestroyWindow(driver->window);
@@ -114,6 +115,11 @@ bool Drvier_makeWindowTransparent()
 		return SetLayeredWindowAttributes(hWnd, RGB(255, 0, 255), 0, LWA_COLORKEY);
 	}
 	return false;
+}
+
+void Driver_minimizeWindow()
+{
+	if (driver) SDL_MinimizeWindow(driver->window);
 }
 
 char *Driver_getTitle()
@@ -157,6 +163,28 @@ Uint32 Driver_getBgColor()
 	return 0;
 }
 
+bool Driver_setIcon(char *iconName)
+{
+	if (driver != NULL) {
+		char imagePath[100];
+
+		if (driver->iconSurface != NULL) SDL_FreeSurface(driver->iconSurface);
+
+		sprintf(imagePath, "./res/images/%s", iconName);
+		driver->iconSurface = IMG_Load(imagePath);
+		if (driver->iconSurface == NULL) {
+			sprintf(imagePath, "../res/images/%s", iconName);
+			driver->iconSurface = IMG_Load(imagePath);
+		}
+		if (driver->iconSurface == NULL) {
+			LOG_ERROR("Image \"%s\" introuvable", imagePath);
+			return false;
+		}
+		SDL_SetWindowIcon(driver->window, driver->iconSurface);
+	}
+	return false;
+}
+
 IMAGE *Driver_loadImage(char *imageName)
 {
 	IMAGE *image = NULL;
@@ -183,6 +211,7 @@ IMAGE *Driver_loadImage(char *imageName)
 			Array_append(driver->ressources, Data_new(ID_DEFAULT, imageName, IMAGE_TYPE, image, freeImage));
 
 			SDL_FreeSurface(surface);
+
 			SUCCESS("Importation de %s", imagePath);
 		} else {
 			if (data->type == IMAGE_TYPE) {

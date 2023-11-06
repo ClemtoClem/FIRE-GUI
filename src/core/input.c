@@ -11,8 +11,8 @@ bool Input_init(bool usedScancode)
 		if (input != NULL) {
 			input->usedScancode = usedScancode;
 			
-			SDL_GetMouseState(&input->mouse.x, &input->mouse.y);
-			SDL_GetMouseState(&input->mouse.lastX, &input->mouse.lastY);
+			SDL_GetGlobalMouseState(&input->mouse.x, &input->mouse.y);
+			SDL_GetGlobalMouseState(&input->mouse.lastX, &input->mouse.lastY);
 
 			success = true;
 		}
@@ -116,12 +116,12 @@ void Input_event()
 					input->hasEvent = true;
 					break;
 				case SDL_MOUSEMOTION: /* évènement déplacer la souris */
-					input->mouse.x = input->event.button.x;
-					input->mouse.y = input->event.button.y;
-					input->mouse.moveX = (input->mouse.x - input->mouse.lastX)/3;
-					input->mouse.moveY = (input->mouse.y - input->mouse.lastY)/3;
 					input->mouse.lastX = input->mouse.x;
 					input->mouse.lastY = input->mouse.y;
+					input->mouse.x = input->event.button.x;
+					input->mouse.y = input->event.button.y;
+					input->mouse.moveX = (input->mouse.x - input->mouse.lastX)/2;
+					input->mouse.moveY = (input->mouse.y - input->mouse.lastY)/2;
 					if (input->mouse.moveX != 0 || input->mouse.moveY != 0) {
 						input->mouse.moveEvent = true;
 						input->hasEvent = true;
