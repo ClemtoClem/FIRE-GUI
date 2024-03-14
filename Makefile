@@ -2,58 +2,73 @@
 #           Makefile: makefile
 #==========================================
 
-CC := gcc
-
-# Utiliser la commande de suppression propre à l'os
-ifeq ($(OS), Windows_NT)
-	RM := rm
+PROJECT_NAME := PolyAdventure
+CC        := gcc
+SRCDIR    := src
+HEADERDIR := # include
+ifeq ($(OS),Windows_NT)
+BUILDDIR  := ./window/build
+BINDIR    := ./window/bin
 else
-	RM := rm -rf
+BUILDDIR  := ./linux/build
+BINDIR    := ./linux/bin
 endif
-
-# Liste des repertoires contenant respectivement les fichiers :*.c,*.h,*.o, l'executable
-SRCDIR  := src
-HEADDIR := -I C:/MinGW/x86_64-w64-mingw32/include/SDL2
-LIBDIR := -L C:/MinGW/x86_64-w64-mingw32/lib
-MINGW_BUILD_DIR = C:/MinGW/x86_64-w64-mingw32/bin
-BINDIR := bin
-
-#CFLAGS := $(HEADDIR) $(LIBDIR) -g -Wall -pedantic -O3 -fno-tree-vectorize
-CFLAGS := $(HEADDIR) $(LIBDIR) -g -Wall -fcommon
-ifeq ($(OS), Windows_NT)
-	GLLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
+TARGET    := $(BINDIR)/$(PROJECT_NAME)
+SOURCES   := $(shell find $(SRCDIR) -type f -name *.c*)
+HEDEARS   := $(shell find $(HEADERDIR) -type f -name *.h*)
+OBJECTS   := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(addsuffix .o,$(basename $(SOURCES))))
+DEPS      := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(addsuffix .d,$(basename $(SOURCES))))
+CFLAGS    := -Wall -D_GNU_SOURCE
+LIB       := 
+ifeq ($(OS),Windows_NT)
+LIB       += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 else
-	GLLIBS = -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
+LIB       += $(shell sdl2-config --libs) -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 endif
+INC       := -I src # -I include
 
-# L'executable
-BIN := $(BINDIR)/main
+# List of all files in the directory
+ALL_FILES := $(wildcard $(BINDIR)/*) $(wildcard $(BUILDDIR)/*)
+# List of .dll files
+DLL_FILES := $(wildcard $(BINDIR)/*.dll)
+# List of files to be deleted (excluding .dll files)
+DELETE_FILES := $(filter-out $(DLL_FILES), $(ALL_FILES))
 
-# Où trouver les differents sources *.c qu'il faudra compiler pour creer les objets correspondants
-SRC := $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/**/*.c)
-OBJ := $(SRC:$(SRCDIR)/%.c=$(BINDIR)/%.o)
+GREEN=`tput setaf 2`
+RESET=`tput sgr0`
 
-all: $(BIN)
+define print_green
+	@echo "$(GREEN)$(1)$(RESET)"
+endef
 
-# Creation de l'executable
-$(BIN): $(OBJ)
-	@echo "=== Checking $^ ==="
-	$(CC) -o $@ $^ $(CFLAGS) $(GLLIBS)
-
-# Creation des differents *.o à partir des /*.c
-$(BINDIR)/%.o: $(SRCDIR)/%.c
-	@echo "=== Creating object ==="
-	$(CC) -o $@ -c $< $(CFLAGS)
-
-copy:
-	mkdir -p $(BINDIR)
-	cp -f $(MINGW_BUILD_DIR)/SDL2.dll $(BINDIR)
-	cp -f $(MINGW_BUILD_DIR)/SDL2_ttf.dll $(BINDIR)
-	cp -f $(MINGW_BUILD_DIR)/SDL2_image.dll $(BINDIR)
-	cp -f $(MINGW_BUILD_DIR)/SDL2_mixer.dll $(BINDIR)
+all: $(TARGET)
 
 # Nettoyage des objets (Tout sera recompiler)
 clean:
 	@echo "=== Cleaning project ==="
-	$(RM) $(BINDIR)/main.exe $(BINDIR)/*.o $(BINDIR)/**/*.o
-.PHONY: clean
+	rm -f $(DELETE_FILES)
+
+$(TARGET): $(BINDIR) $(BUILDDIR) $(OBJECTS)
+	$(call print_green,"Linking object files...")
+	@$(CC) $(OBJECTS) -o $(TARGET) $(LIB)
+	$(call print_green,"$(TARGET) has been created!")
+
+$(BUILDDIR) :
+	mkdir $(BUILDDIR)
+
+$(BINDIR):
+	mkdir $(BINDIR)
+	
+$(BUILDDIR)/%.o: $(SRCDIR)/%.c*
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(INC) -M $< -MT $@ > $(@:.o=.td)
+	@cp $(@:.o=.td) $(@:.o=.d); 
+	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	-e '/^$$/ d' -e 's/$$/ :/' < $(@:.o=.td) >> $(@:.o=.d); 
+	@rm -f $(@:.o=.td)
+
+
+-include $(DEPS)
+
+.PHONY: clean all
