@@ -15,9 +15,11 @@ bool Input_init(bool usedScancode)
 			SDL_GetGlobalMouseState(&input->mouse.lastX, &input->mouse.lastY);
 
 			success = true;
+			SUCCESS("Input already initialized");
 		}
 	} else {
 		success = true;
+		SUCCESS("Input already initialized");
 	}
 	return success;
 }

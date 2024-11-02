@@ -6,7 +6,12 @@ DATA *Data_new(Uint32 id, char *key, TypeData type, void *buffer, void (*freeFun
 	DATA *data = malloc(sizeof(DATA));
 	if (data != NULL) {
 		data->id = id;
-		data->key = strdup(key);
+		if (key != NULL) {
+			data->key = malloc(strlen(key)+1);
+			strcpy(data->key, key);
+		} else  {
+			data->key = NULL;
+		}
 		data->type = type;
 		data->buffer = buffer;
 		data->freeFunc = freeFunc;
@@ -455,11 +460,19 @@ void Data_BufferToString(DATA *data, char *dest, size_t len)
 				strncpy(dest, text, len);
 				break;
 			case UINT64_TYPE:
-				sprintf( text, "%llu", *((Uint64 *) data->buffer));
+				#ifdef _WIN32
+					sprintf( text, "%llu", *((Uint64 *) data->buffer));
+				#else
+					sprintf( text, "%lu", *((Uint64 *) data->buffer));
+				#endif
 				strncpy(dest, text, len);
 				break;
 			case SINT64_TYPE:
-				sprintf( text, "%lld", *((Sint64 *) data->buffer));
+				#ifdef _WIN32
+					sprintf( text, "%lld", *((Sint64 *) data->buffer));
+				#else
+					sprintf( text, "%ld", *((Sint64 *) data->buffer));
+				#endif
 				strncpy(dest, text, len);
 				break;
 			case FLOAT_TYPE:
@@ -898,7 +911,11 @@ Uint64 Array_getUint64(ARRAY *array, char *key, Uint64 defaultValue)
 	DATA *data = Array_getFromKey(array, key);
 	if (data != NULL) {
 		if (data->type == STRING_TYPE) {
-			sscanf(data->buffer, "%llu", &val);
+			#ifdef _WIN32
+				sscanf(data->buffer, "%llu", &val);
+			#else
+				sscanf(data->buffer, "%lu", &val);
+			#endif
 		} else if (data->type == UINT64_TYPE) {
 			val = *((Uint64 *) data->buffer);
 		}
@@ -912,7 +929,11 @@ Sint64 Array_getSint64(ARRAY *array, char *key, Sint64 defaultValue)
 	DATA *data = Array_getFromKey(array, key);
 	if (data != NULL) {
 		if (data->type == STRING_TYPE) {
-			sscanf(data->buffer, "%lld", &val);
+			#ifdef _WIN32
+				sscanf(data->buffer, "%lld", &val);
+			#else
+				sscanf(data->buffer, "%ld", &val);
+			#endif
 		} else if (data->type == SINT64_TYPE) {
 			val = *((Sint64 *) data->buffer);
 		}

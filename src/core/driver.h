@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <windows.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -57,7 +56,7 @@ void Driver_free();
 
 DRIVER *Driver_get();
 
-bool Drvier_makeWindowTransparent();
+bool Driver_makeWindowTransparent();
 
 void Driver_minimizeWindow();
 

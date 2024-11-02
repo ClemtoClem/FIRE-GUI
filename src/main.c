@@ -159,13 +159,23 @@ int main(int argv, char *argc[])
 	}
 
 	if (!Init()) goto EndMain;
-	int desktopWidth = GetSystemMetrics(SM_CXSCREEN);
-    int desktopHeight = GetSystemMetrics(SM_CYSCREEN);
+	SUCCESS("Init SDL");
+
+	SDL_DisplayMode DM;
+	if (SDL_GetCurrentDisplayMode(0, &DM) != 0) {
+		printf("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
+		return 1;
+	}
+	int desktopWidth = DM.w;
+    int desktopHeight = DM.h;
+
 	if (!Driver_init("GUI Test", desktopWidth, desktopHeight, SDL_ALPHA_TRANSPARENT, SDL_WINDOW_BORDERLESS)) goto EndMain;
 	if (!Input_init(false)) goto EndMain;
 	if (!GUI_init()) goto EndMain;
 	
 	Driver_setIcon("icon.png");
+	
+	SUCCESS("Driver, Input & GUI Init");
 
 	/* -------------- TEST -------------- */
 	

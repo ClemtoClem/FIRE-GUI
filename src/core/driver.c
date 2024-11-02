@@ -1,11 +1,12 @@
 #include "driver.h"
 #include <SDL2/SDL_syswm.h>
-/*
-#ifndef _WIN32
-#error "This code only works on Windows"
-#endif
 
-#include <windows.h>*/
+#ifdef _WIN32
+#include <windows.h>
+#elif __linux__
+#include <X11/Xlib.h>
+#include <X11/extensions/shape.h>
+#endif
 
 DRIVER *driver = NULL;
 
@@ -26,36 +27,43 @@ bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor, Uint3
 {
 	bool success = false;
 	if (driver == NULL) {
+		DEBUG("Initialisation de la structure Driver");
+
 		ARRAY *ressources		= NULL;
 		SDL_Window	*window		= NULL;
 		SDL_Renderer *renderer	= NULL;
 		
 		ressources = (ARRAY *) Array_new(NO_LIMITED);
 		if (ressources == NULL) { LOG_ERROR("Echec de l'allocation de la structure ARRAY"); goto EndGraphics; }
+		SUCCESS("Allocation de la structure ARRAY");
 
 		window = (SDL_Window *) SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,  SDL_WINDOW_SHOWN|windowflags);
 		if (window == NULL) {
 			LOG_ERROR("Could not create SDL window: %s", SDL_GetError());
 			goto EndGraphics;
 		}
+		SUCCESS("SDL window created");
 		
 		//SDL_SetSurfaceBlendMode(SDL_GetWindowSurface(window), SDL_BLENDMODE_BLEND);
 		
-		//Drvier_windowTransparent();
-
 		renderer = (SDL_Renderer *) SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 		if (renderer == NULL) {
 			LOG_ERROR("Could not create SDL renderer: %s\n", SDL_GetError());
 			goto EndGraphics;
 		}
+		SUCCESS("SDL renderer created");
 
-		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+		//SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		//SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
-		driver = (DRIVER *) calloc(1, sizeof(DRIVER));
+		driver = (DRIVER *) malloc(sizeof(DRIVER));
 		if (driver == NULL) { LOG_ERROR("Echec de l'allocation de la structure Driver"); goto EndGraphics; }
+		memset(driver, 0, sizeof(DRIVER));
+		SUCCESS("Allocation de la structure Driver");
 
-		Driver_openAudio(driver);
+		//Driver_makeWindowTransparent();
+
+		//Driver_openAudio(driver);
 
 		success = true;
 	EndGraphics:
@@ -71,9 +79,11 @@ bool Driver_init(char *title, Uint32 width, Uint32 height, Uint32 bgColor, Uint3
 			driver->ressources	= ressources;
 			driver->window		= window;
 			driver->renderer	= renderer;
+			SUCCESS("Driver already initialized");
 		}
 	} else {
 		success = true;
+		SUCCESS("Driver already initialized");
 	}
 	return success;
 }
@@ -96,23 +106,53 @@ DRIVER *Driver_get()
 	return driver;
 }
 
-bool Drvier_makeWindowTransparent()
-{
+bool Driver_makeWindowTransparent() {
 	if (driver) {
-		 // Set background color to magenta and clear screen
+		// Set background color to magenta (transparent color)
 		SDL_SetRenderDrawColor(driver->renderer, 255, 0, 255, 255);
 		SDL_RenderClear(driver->renderer);
-		
-		// Add window transparency (Magenta will be see-through)
-		// Get window handle
+		SDL_RenderPresent(driver->renderer);
+
 		SDL_SysWMinfo wmInfo;
 		SDL_VERSION(&wmInfo.version);  // Initialize wmInfo
 		SDL_GetWindowWMInfo(driver->window, &wmInfo);
+
+#ifdef _WIN32
+		// Windows-specific code
 		HWND hWnd = wmInfo.info.win.window;
 		// Change window type to layered
 		SetWindowLong(hWnd, GWL_EXSTYLE, GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 		// Set transparency color
 		return SetLayeredWindowAttributes(hWnd, RGB(255, 0, 255), 0, LWA_COLORKEY);
+#elif __linux__
+		// Linux-specific code (X11)
+		Display *display = wmInfo.info.x11.display;
+		Window win = wmInfo.info.x11.window;
+
+		// Define a magenta pixel to be transparent
+		XColor color;
+		color.red = 65535;
+		color.green = 0;
+		color.blue = 65535;
+
+		Colormap colormap = DefaultColormap(display, 0);
+		XAllocColor(display, colormap, &color);
+
+		Pixmap shapeMask = XCreatePixmap(display, win, 1, 1, 1);
+		XGCValues xgc;
+		GC gc = XCreateGC(display, shapeMask, 0, &xgc);
+
+		XSetForeground(display, gc, 0);
+		XFillRectangle(display, shapeMask, gc, 0, 0, 1, 1);
+
+		XShapeCombineMask(display, win, ShapeBounding, 0, 0, shapeMask, ShapeSet);
+		XFreeGC(display, gc);
+		XFreePixmap(display, shapeMask);
+		XSync(display, False);
+
+		return true;
+#endif
+
 	}
 	return false;
 }
@@ -275,8 +315,8 @@ void Driver_clear()
 		SDL_SetRenderDrawColor(driver->renderer, c.r, c.g, c.b, c.a); // Set the renderer's draw color
 		SDL_RenderClear(driver->renderer);
 
-		if (driver->bgColor == SDL_ALPHA_TRANSPARENT)
-			Drvier_makeWindowTransparent();
+		/*if (driver->bgColor == SDL_ALPHA_TRANSPARENT)
+			Driver_makeWindowTransparent();*/
 	}
 }
 
@@ -477,8 +517,8 @@ Sint32 Driver_getVolume()
 Mix_Chunk* Driver_loadSound(char *soundName)
 {
 	Mix_Chunk* sound = NULL;
-    if (driver != NULL && soundName != NULL && driver->audioInited == true) {
-        /* On importe la musique si cela n'a pas dejà été effectué, sinon on la réccupère de la liste */
+	if (driver != NULL && soundName != NULL && driver->audioInited == true) {
+		/* On importe la musique si cela n'a pas dejà été effectué, sinon on la réccupère de la liste */
 		DATA *data = Array_getFromKey(driver->ressources, soundName);
 		if (data == NULL) {
 			char soundPath[100];
@@ -502,7 +542,7 @@ Mix_Chunk* Driver_loadSound(char *soundName)
 				sound = (Mix_Chunk *) data->buffer;
 			}
 		}
-    }
+	}
 	return sound;
 }
 
@@ -554,8 +594,8 @@ void Driver_resumeSound(char *soundName)
 Mix_Music* Driver_loadMusic(char *musicName)
 {
 	Mix_Music* music = NULL;
-    if (driver != NULL && musicName != NULL && driver->audioInited == true) {
-        /* On importe la musique si cela n'a pas dejà été effectué, sinon on la réccupère de la liste */
+	if (driver != NULL && musicName != NULL && driver->audioInited == true) {
+		/* On importe la musique si cela n'a pas dejà été effectué, sinon on la réccupère de la liste */
 		DATA *data = Array_getFromKey(driver->ressources, musicName);
 		if (data == NULL) {
 			char musicPath[100];
@@ -579,7 +619,7 @@ Mix_Music* Driver_loadMusic(char *musicName)
 				music = (Mix_Music *) data->buffer;
 			}
 		}
-    }
+	}
 	return music;
 }
 
@@ -592,7 +632,7 @@ void freeMusic(void *buffer, TypeData type)
 
 void Driver_playMusic(char *musicName, int loops)
 {
-    if (driver != NULL && musicName != NULL && driver->audioInited == true) {
+	if (driver != NULL && musicName != NULL && driver->audioInited == true) {
 		Driver_stopMusic();
 		DATA *data = Array_getFromKey(driver->ressources, musicName);
 		Mix_Music *music = NULL;
@@ -613,7 +653,7 @@ void Driver_playMusic(char *musicName, int loops)
 
 void Driver_stopMusic()
 {
-    if (driver != NULL && driver->audioInited == true && driver->currentMusic != NULL) {
+	if (driver != NULL && driver->audioInited == true && driver->currentMusic != NULL) {
 		driver->currentMusic = NULL;
 		Mix_HaltMusic(); //Stop the music
 	}
@@ -621,7 +661,7 @@ void Driver_stopMusic()
 
 void Driver_pauseMusic()
 {
-    if (driver != NULL && driver->audioInited == true
+	if (driver != NULL && driver->audioInited == true
 		&& driver->currentMusic != NULL && driver->pauseMusic == false) {
 		driver->pauseMusic = true;
 		Mix_PauseMusic(); //Pause the music
@@ -630,7 +670,7 @@ void Driver_pauseMusic()
 
 void Driver_resumeMusic()
 {
-    if (driver != NULL && driver->audioInited == true
+	if (driver != NULL && driver->audioInited == true
 		&& driver->currentMusic != NULL && driver->pauseMusic == true) {
 		driver->pauseMusic = false;
 		Mix_ResumeMusic(); //Resume the music

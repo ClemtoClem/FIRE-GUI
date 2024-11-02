@@ -8,13 +8,15 @@ bool GUI_init()
 {
 	bool success = false;
 	if (gui == NULL) {
-		gui = (GUI *) calloc(1, sizeof(GUI));
+		gui = (GUI *) malloc(sizeof(GUI));
+		memset(gui, 0, sizeof(GUI));
 		if (gui != NULL) {
 			SDL_Rect win = {0, 0, Driver_getWidth(), Driver_getHeight()};
 			gui->root = Widget_new(NULL, ROOT_WIDGET_NAME, ROOT_WIDGET_TYPE, &win, NULL,
 				NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 			success = true;
+			SUCCESS("GUI Init");
 		}
 	}
 	return success;

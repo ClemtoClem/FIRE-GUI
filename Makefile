@@ -1,38 +1,23 @@
-#==========================================
-#           Makefile: makefile
-#==========================================
-
-PROJECT_NAME := PolyAdventure
+PROJECT_NAME := FIRE_GUI
 CC        := gcc
 SRCDIR    := src
-HEADERDIR := # include
-ifeq ($(OS),Windows_NT)
-BUILDDIR  := ./window/build
-BINDIR    := ./window/bin
-else
-BUILDDIR  := ./linux/build
-BINDIR    := ./linux/bin
-endif
-TARGET    := $(BINDIR)/$(PROJECT_NAME)
-SOURCES   := $(shell find $(SRCDIR) -type f -name *.c*)
-HEDEARS   := $(shell find $(HEADERDIR) -type f -name *.h*)
-OBJECTS   := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(addsuffix .o,$(basename $(SOURCES))))
-DEPS      := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(addsuffix .d,$(basename $(SOURCES))))
-CFLAGS    := -Wall -D_GNU_SOURCE
-LIB       := 
-ifeq ($(OS),Windows_NT)
-LIB       += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
-else
-LIB       += $(shell sdl2-config --libs) -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
-endif
-INC       := -I src # -I include
+BUILDDIR  := build
+BINDIR    := bin
+TARGET    := $(PROJECT_NAME)
+SOURCES   := $(shell find $(SRCDIR) -name '*.c')
+OBJECTS   := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
+DEPS      := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.d,$(SOURCES))
+CFLAGS    := -Wall -g
+LIB       := -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
 
-# List of all files in the directory
-ALL_FILES := $(wildcard $(BINDIR)/*) $(wildcard $(BUILDDIR)/*)
-# List of .dll files
-DLL_FILES := $(wildcard $(BINDIR)/*.dll)
-# List of files to be deleted (excluding .dll files)
-DELETE_FILES := $(filter-out $(DLL_FILES), $(ALL_FILES))
+# Platform-specific settings
+ifeq ($(OS),Windows_NT)
+    PLATFORM := windows
+    LIB += -lgdi32
+else
+    PLATFORM := linux
+    LIB += -lX11 -lXext
+endif
 
 GREEN=`tput setaf 2`
 RESET=`tput sgr0`
@@ -43,31 +28,25 @@ endef
 
 all: $(TARGET)
 
-# Nettoyage des objets (Tout sera recompiler)
 clean:
-	@echo "=== Cleaning project ==="
-	rm -f $(DELETE_FILES)
+	rm -rf $(BUILDDIR) $(TARGET)
 
-$(TARGET): $(BINDIR) $(BUILDDIR) $(OBJECTS)
+$(TARGET): $(BUILDDIR) $(OBJECTS)
 	$(call print_green,"Linking object files...")
 	@$(CC) $(OBJECTS) -o $(TARGET) $(LIB)
 	$(call print_green,"$(TARGET) has been created!")
 
 $(BUILDDIR) :
-	mkdir $(BUILDDIR)
-
-$(BINDIR):
-	mkdir $(BINDIR)
+	mkdir -p $(BUILDDIR)
 	
-$(BUILDDIR)/%.o: $(SRCDIR)/%.c*
+$(BUILDDIR)/%.o: $(SRCDIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
-	@$(CC) $(CFLAGS) $(INC) -M $< -MT $@ > $(@:.o=.td)
+	$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -M $< -MT $@ > $(@:.o=.td)
 	@cp $(@:.o=.td) $(@:.o=.d); 
 	@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
 	-e '/^$$/ d' -e 's/$$/ :/' < $(@:.o=.td) >> $(@:.o=.d); 
 	@rm -f $(@:.o=.td)
-
 
 -include $(DEPS)
 
