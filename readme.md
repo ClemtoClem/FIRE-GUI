@@ -1,6 +1,6 @@
 # ![icon](res/images/icon.png) FIRE-GUI v1.0
 
-This is a C graphical user interface library using the **SDL2 2.28.4** library for **Window OS**.
+This is a C graphical user interface library using the **SDL2 2.28.4** library for **Window 10/11** and **Ubuntu 22.04/24.04**
 
 All graphic elements managed by the GUI come from a widget structure.
 
